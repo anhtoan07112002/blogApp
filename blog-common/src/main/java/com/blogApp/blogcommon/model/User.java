@@ -2,11 +2,14 @@ package com.blogApp.blogcommon.model;
 
 import com.blogApp.blogcommon.enums.RoleName;
 import com.blogApp.blogcommon.enums.AuthProvider;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+
+import java.io.Serializable;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
@@ -18,7 +21,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class User extends BaseEntity {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class User extends BaseEntity implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     @NotBlank
     @Size(max = 50)

@@ -1,25 +1,32 @@
-package com.blogApp.blogcommon.dto;
+package com.blogApp.blogcommon.dto.response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
+
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import com.blogApp.blogcommon.model.User;
 
+import java.io.Serializable;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class UserPrincipal implements UserDetails {
-    private final Long id;
-    private final String username;
-    private final String email;
-    private final String password;
-    private final Collection<? extends GrantedAuthority> authorities;
+@NoArgsConstructor
+public class UserPrincipal implements UserDetails, Serializable {
+
+    private static final long serialVersionUID = 1L;
+
+    private Long id;
+    private String username;
+    private String email;
+    private String password;
+    private Collection<? extends GrantedAuthority> authorities;
 
     public static UserPrincipal create(User user) {
         List<GrantedAuthority> authorities = Collections.singletonList(

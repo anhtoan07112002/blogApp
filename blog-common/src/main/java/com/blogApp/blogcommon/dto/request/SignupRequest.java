@@ -40,4 +40,7 @@ public class SignupRequest {
 
     @Size(max = 50, message = "Last name must be less than 50 characters")
     private String lastName;
+    
+    @Size(max = 100, message = "Name must be less than 100 characters")
+    private String name;
 }
