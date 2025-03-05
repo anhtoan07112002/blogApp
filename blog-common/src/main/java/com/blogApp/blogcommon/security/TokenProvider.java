@@ -1,6 +1,6 @@
 package com.blogApp.blogcommon.security;
 
-import com.blogApp.blogcommon.dto.response.UserPrincipal;
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;

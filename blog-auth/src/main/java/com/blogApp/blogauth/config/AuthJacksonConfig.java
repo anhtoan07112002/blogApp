@@ -16,6 +16,6 @@ import org.springframework.context.annotation.Import;
  */
 @Configuration
 @Import({RedisJacksonConfig.class, WebJacksonConfig.class})
-public class JacksonConfig {
+public class AuthJacksonConfig {
     // Không cần thêm gì ở đây, chỉ cần import các cấu hình cần thiết
 } 

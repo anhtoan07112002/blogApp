@@ -21,8 +21,8 @@ public class AppConstants {
     public static final String REFRESH_TOKEN_CACHE = "auth:token:refresh";
     public static final String ACCESS_TOKEN_BLACKLIST_CACHE = "auth:token:blacklist";
     public static final String USER_PROFILE_CACHE = "users:profile";
-
-
+    public static final String MEDIA_CACHE = "media";
+    public static final long MEDIA_CACHE_TTL = 3600; // 1 giờ
 
     // API Endpoints
     public static final String API_BASE_PATH = "/api";
@@ -35,6 +35,9 @@ public class AppConstants {
     public static final String FILE_UPLOAD_DIR = "uploads";
     public static final long MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
     public static final String[] ALLOWED_IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif"};
+    public static final String[] ALLOWED_VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov"};
+    public static final String[] ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".wav", ".ogg"};
+    public static final String[] ALLOWED_DOCUMENT_EXTENSIONS = {".pdf", ".doc", ".docx", ".txt"};
 
     // Token related
     public static final String TOKEN_TYPE = "Bearer";

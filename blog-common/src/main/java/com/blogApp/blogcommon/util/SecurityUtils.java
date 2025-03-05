@@ -1,6 +1,6 @@
 package com.blogApp.blogcommon.util;
 
-import com.blogApp.blogcommon.dto.response.UserPrincipal;
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.exception.BlogException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;

@@ -10,6 +10,12 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Entity đại diện cho một bình luận trong blog
+ * - Sử dụng UUID làm khóa chính
+ * - Có mối quan hệ với bài viết (Post) và bình luận cha (parent)
+ * - Tự động quản lý thời gian tạo/cập nhật
+ */
 @Entity
 @Table(name = "comments")
 @Data

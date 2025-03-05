@@ -23,7 +23,8 @@
 		<module>blog-auth</module>
         <module>blog-eureka</module>
 		<module>blog-post</module>
-		<!--		<module>blog-post</module>-->
+        <module>blog-media</module>
+        <!--		<module>blog-post</module>-->
 <!--		<module>blog-media</module>-->
 <!--		<module>blog-notification</module>-->
 <!--		<module>blog-gateway</module>-->

@@ -2,7 +2,7 @@ package com.blogApp.blogauth.security;
 
 import com.blogApp.blogauth.repository.UserRepository;
 import com.blogApp.blogcommon.constant.AppConstants;
-import com.blogApp.blogcommon.dto.response.UserPrincipal;
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.exception.ResourceNotFoundException;
 import com.blogApp.blogcommon.model.User;
 import com.blogApp.blogcommon.security.CustomUserDetailsService;

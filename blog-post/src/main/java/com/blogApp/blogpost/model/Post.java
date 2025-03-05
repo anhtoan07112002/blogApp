@@ -13,6 +13,15 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+/**
+ * Entity đại diện cho một bài viết trong blog
+ * - Sử dụng UUID làm khóa chính
+ * - Có các trường cơ bản: tiêu đề, nội dung, slug, tác giả
+ * - Hỗ trợ tìm kiếm full-text với Hibernate Search
+ * - Có các mối quan hệ nhiều-nhiều với Category và Tag
+ * - Có mối quan hệ một-nhiều với Comment
+ * - Tự động quản lý thời gian tạo/cập nhật
+ */
 @Entity
 @Table(name = "posts")
 @Indexed

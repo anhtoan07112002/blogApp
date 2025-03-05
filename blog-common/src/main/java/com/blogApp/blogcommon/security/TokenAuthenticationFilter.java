@@ -2,7 +2,7 @@ package com.blogApp.blogcommon.security;
 
 import com.blogApp.blogcommon.constant.AppConstants;
 import com.blogApp.blogcommon.constant.SecurityConstants;
-import com.blogApp.blogcommon.dto.response.UserPrincipal;
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.service.CacheService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -4,7 +4,7 @@ import com.blogApp.blogauth.dto.request.RefreshTokenRequest;
 import com.blogApp.blogauth.dto.response.TokenResponse;
 import com.blogApp.blogauth.service.AuthService;
 import com.blogApp.blogcommon.constant.SecurityConstants;
-import com.blogApp.blogcommon.dto.response.UserPrincipal;
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.dto.request.LoginRequest;
 import com.blogApp.blogcommon.dto.request.SignupRequest;
 import com.blogApp.blogcommon.dto.response.ApiResponse;
