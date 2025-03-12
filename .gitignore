@@ -35,11 +35,9 @@ build/
 ### Security ###
 # Local configuration files
 # Keep application.yml.example in git, but ignore all others that might contain secrets
-src/main/resources/application-dev.yml
-src/main/resources/application-prod.yml
-src/main/resources/application-*.yml
-src/main/resources/application.yml
-!src/main/resources/application.yml.example
+**/src/main/resources/application.yml
+**/src/main/resources/application-*.yml
+!**/src/main/resources/application.yml.example
 
 # Environment variables
 .env

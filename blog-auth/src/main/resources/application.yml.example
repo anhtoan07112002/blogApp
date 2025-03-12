@@ -78,9 +78,9 @@ app:
       issuer: blog-app
 
   cors:
-    allowedOrigins: http://localhost:3000,http://localhost:8080,*
+    allowedOrigins: http://localhost:3000,http://localhost:8080,http://localhost:8081,*
     allowedMethods: GET,POST,PUT,PATCH,DELETE,OPTIONS
-    allowedHeaders: Authorization,Content-Type,X-Requested-With
+    allowedHeaders: Authorization,Content-Type,X-Requested-With,Access-Control-Allow-Origin
     maxAge: 3600
 
   cache:
@@ -101,12 +101,19 @@ logging:
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE
 
 springdoc:
-  api-docs:
-    path: /api-docs
   swagger-ui:
-    path: /swagger-ui
-    operationsSorter: method
-  packages-to-scan: com.blogApp.auth.controller
+    path: /swagger-ui.html
+    enabled: true
+    disable-swagger-default-url: true
+    urls:
+      - url: /v3/api-docs
+        name: Blog Auth Service API
+  api-docs:
+    path: /v3/api-docs
+    enabled: true
+  packages-to-scan: com.blogApp.blogauth.controller
+  default-produces-media-type: application/json
+  use-root-path: true
 
 management:
   endpoints:
