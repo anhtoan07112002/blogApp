@@ -46,7 +46,7 @@ public interface MediaRepository extends JpaRepository<Media, UUID> {
     /**
      * Tìm media theo userId và mediaType với phân trang
      */
-    Page<Media> findByUserIdAndMediaTypeAndIsDeletedFalseOrderByCreatedAtDesc(
+    Page<Media> findByUserIdAndMediaFileTypeAndIsDeletedFalseOrderByCreatedAtDesc(
             UUID userId, MediaFileType mediaFileType, Pageable pageable);
     
     /**
@@ -64,7 +64,7 @@ public interface MediaRepository extends JpaRepository<Media, UUID> {
     /**
      * Tìm media công khai theo mediaType với phân trang
      */
-    Page<Media> findByIsPublicTrueAndMediaTypeAndIsDeletedFalseOrderByCreatedAtDesc(
+    Page<Media> findByIsPublicTrueAndMediaFileTypeAndIsDeletedFalseOrderByCreatedAtDesc(
             MediaFileType mediaFileType, Pageable pageable);
     
     // ========== Find by File Info ==========
@@ -141,7 +141,7 @@ public interface MediaRepository extends JpaRepository<Media, UUID> {
      * Tìm media theo metadata
      */
     @Query("SELECT m FROM Media m WHERE m.userId = :userId AND m.isDeleted = false " +
-           "AND m.metaData LIKE %:key% AND m.metaData LIKE %:value% " +
+           "AND CAST(m.metaData AS string) LIKE CONCAT('%', :key, '%') AND CAST(m.metaData AS string) LIKE CONCAT('%', :value, '%') " +
            "ORDER BY m.createdAt DESC")
     Page<Media> findByMetadata(@Param("userId") UUID userId, 
                               @Param("key") String key, 
@@ -159,7 +159,7 @@ public interface MediaRepository extends JpaRepository<Media, UUID> {
     /**
      * Đếm số lượng media theo loại của user
      */
-    long countByUserIdAndMediaTypeAndIsDeletedFalse(UUID userId, MediaFileType mediaFileType);
+    long countByUserIdAndMediaFileTypeAndIsDeletedFalse(UUID userId, MediaFileType mediaFileType);
     
     /**
      * Đếm số lượng media theo trạng thái xử lý

@@ -10,6 +10,15 @@ public class SecurityConstants {
             "/api/tags/**",
             "/api/comments/public/**",
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/swagger-ui.html",
+            "/swagger-resources/**",
+            "/v3/api-docs/**",
+            "/v3/api-docs/swagger-config",
+            "/webjars/**",
+            "/api/*/swagger-ui/**",
+            "/api/*/swagger-ui.html",
+            "/api/*/v3/api-docs/**",
+            "/api/*/v3/api-docs/swagger-config",
+            "/api/*/webjars/**"
     };
 }

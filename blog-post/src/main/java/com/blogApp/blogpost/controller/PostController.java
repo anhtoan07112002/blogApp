@@ -1,5 +1,6 @@
 package com.blogApp.blogpost.controller;
 
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.dto.response.PagedResponse;
 import com.blogApp.blogcommon.enums.PostStatus;
 import com.blogApp.blogpost.dto.request.PostCreateRequest;
@@ -31,15 +32,15 @@ public class PostController {
     /**
      * Tạo bài viết mới
      * @param request DTO chứa thông tin bài viết
-     * @param userId ID của người dùng tạo bài viết
+     * @param userPrincipal Thông tin người dùng đã xác thực
      * @return PostSummaryDTO chứa thông tin bài viết đã tạo
      */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostSummaryDTO> createPost(
             @Valid @RequestBody PostCreateRequest request,
-            @AuthenticationPrincipal String userId) {
-        return ResponseEntity.ok(postService.createPost(request, userId));
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(postService.createPost(request, userPrincipal.getId().toString()));
     }
 
     /**
@@ -66,14 +67,16 @@ public class PostController {
      * Cập nhật thông tin bài viết
      * @param id ID của bài viết cần cập nhật
      * @param request DTO chứa thông tin cập nhật
+     * @param userPrincipal Thông tin người dùng đã xác thực
      * @return PostSummaryDTO chứa thông tin bài viết đã cập nhật
      */
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostSummaryDTO> updatePost(
             @PathVariable UUID id,
-            @Valid @RequestBody PostUpdateRequest request) {
-        return ResponseEntity.ok(postService.updatePost(id, request));
+            @Valid @RequestBody PostUpdateRequest request,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(postService.updatePost(id, request, userPrincipal.getId().toString()));
     }
 
     /**
@@ -82,9 +85,11 @@ public class PostController {
      * @return ResponseEntity không có nội dung
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<Void> deletePost(@PathVariable UUID id) {
-        postService.deletePost(id);
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> deletePost(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        postService.deletePost(id, userPrincipal.getId().toString());
         return ResponseEntity.noContent().build();
     }
 
@@ -162,14 +167,16 @@ public class PostController {
      * Cập nhật trạng thái bài viết
      * @param id ID của bài viết
      * @param status Trạng thái mới
+     * @param userPrincipal Thông tin người dùng đã xác thực
      * @return PostSummaryDTO chứa thông tin bài viết đã cập nhật
      */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<PostSummaryDTO> updatePostStatus(
             @PathVariable UUID id,
-            @RequestParam PostStatus status) {
-        return ResponseEntity.ok(postService.updatePostStatus(id, status));
+            @RequestParam PostStatus status,
+            @AuthenticationPrincipal UserPrincipal userPrincipal) {
+        return ResponseEntity.ok(postService.updatePostStatus(id, status, userPrincipal.getId().toString()));
     }
 
     /**

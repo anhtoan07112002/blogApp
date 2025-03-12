@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
 /**
@@ -20,6 +21,9 @@ import org.springframework.context.annotation.Configuration;
 @RequiredArgsConstructor
 @Slf4j
 public class MinioConfig {
+
+    @Value("${minio.enabled:true}")
+    private boolean enabled;
 
     @Value("${minio.url}")
     private String minioUrl;
@@ -50,6 +54,11 @@ public class MinioConfig {
      */
     @Bean
     public MinioClient minioClient() {
+        if (!enabled) {
+            log.warn("MinIO đã bị vô hiệu hóa trong cấu hình. Các tính năng lưu trữ file sẽ không hoạt động.");
+            return null;
+        }
+
         try {
             // Xử lý URL dựa trên secure flag
             String endpoint = secure ? 
@@ -61,8 +70,18 @@ public class MinioConfig {
             MinioClient minioClient = MinioClient.builder()
                     .endpoint(endpoint)
                     .credentials(accessKey, secretKey)
-                    .region("vietnam")
+                    .region(region)
                     .build();
+            
+            // Kiểm tra kết nối
+            try {
+                minioClient.listBuckets();
+                log.info("Kết nối thành công đến MinIO server tại: {}", endpoint);
+            } catch (Exception e) {
+                log.error("Không thể kết nối đến MinIO server: {}", e.getMessage());
+                log.error("Vui lòng đảm bảo MinIO server đang chạy tại: {}", endpoint);
+                throw new RuntimeException("Could not initialize MinIO client: " + e.getMessage(), e);
+            }
             
             // Kiểm tra và tạo bucket nếu cần
             if (createBucketIfNotExists) {

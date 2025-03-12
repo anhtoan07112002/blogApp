@@ -1,0 +1,126 @@
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  application:
+    name: blog-auth-service
+  cloud:
+    config:
+      enabled: false
+  zipkin:
+    enabled: false
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: your-email@gmail.com
+    password: your-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/blog_auth_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+    username: your-db-username
+    password: your-db-password
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+  redis:
+    host: localhost
+    port: 6379
+    timeout: 10000
+    repositories:
+      enabled: false
+
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+      FAIL_ON_EMPTY_BEANS: false
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+    time-zone: UTC
+
+  servlet:
+    multipart:
+      max-file-size: 5MB
+      max-request-size: 5MB
+
+server:
+  port: 8081
+  servlet:
+    context-path: /api/auth
+  compression:
+    enabled: true
+
+app:
+  service:
+    name: auth
+  auth:
+    jwt:
+      secret: your-jwt-secret
+      accessTokenExpirationMs: 900000
+      refreshTokenExpirationMs: 604800000
+      token-type: Bearer
+      refresh-token-cookie-name: refreshToken
+      issuer: blog-app
+
+  cors:
+    allowedOrigins: http://localhost:3000,http://localhost:8080,*
+    allowedMethods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+    allowedHeaders: Authorization,Content-Type,X-Requested-With
+    maxAge: 3600
+
+  cache:
+    prefix: blog
+
+logging:
+  level:
+    root: INFO
+    com.blogApp: DEBUG
+    com.blogApp.blogcommon.security: TRACE
+    com.blogApp.blogcommon.service.CacheService: TRACE
+    com.blogApp.blogauth.security: TRACE
+    com.blogApp.blogauth.service: DEBUG
+    org.springframework.security: INFO
+    org.springframework.data.redis: DEBUG
+    org.springframework.web: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method
+  packages-to-scan: com.blogApp.auth.controller
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when_authorized
+  tracing:
+    sampling:
+      probability: 1.0
+    enabled: false
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+    enabled: false 

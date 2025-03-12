@@ -1,0 +1,162 @@
+server:
+  port: ${SERVER_PORT:8083}
+  servlet:
+    context-path: /api/media
+
+spring:
+  application:
+    name: blog-media-service
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://postgres-media:5432/blog_media_db}
+    username: ${SPRING_DATASOURCE_USERNAME:postgres}
+    password: ${SPRING_DATASOURCE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+  redis:
+    host: ${SPRING_REDIS_HOST:redis}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:}
+    timeout: 10000
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1 hour in milliseconds
+      cache-null-values: false
+  cloud:
+    config:
+      enabled: false
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB
+      max-request-size: 50MB
+  # Cấu hình Jackson cho JSON
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+      FAIL_ON_EMPTY_BEANS: false
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+    time-zone: UTC
+
+# JWT Configuration
+app:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET:QURGREFERkFERkFCRERGQURGNTY3ODkwNDU2Nzg5MEFCQ0RFRg==}
+      accessTokenExpirationMs: 900000      # 15 phút
+      refreshTokenExpirationMs: 604800000  # 7 ngày
+      token-type: Bearer
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://blog-auth-service:8081}
+
+# MinIO Configuration
+minio:
+  enabled: true
+  url: ${MINIO_URL:http://minio:9000}
+  access-key: ${MINIO_ACCESS_KEY:minioadmin}
+  secret-key: ${MINIO_SECRET_KEY:minioadmin}
+  bucket-name: ${MINIO_BUCKET_NAME:blog-media}
+  secure: false
+  create-bucket-if-not-exists: true
+  region: vietnam
+  
+# Eureka Configuration  
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+
+# Resilience4j Configuration
+resilience4j:
+  circuitbreaker:
+    instances:
+      auth-service:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 5
+  retry:
+    instances:
+      auth-service:
+        maxRetryAttempts: 3
+        waitDuration: 1000
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    diskspace:
+      enabled: true
+    circuitbreakers:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  tracing:
+    enabled: false
+  zipkin:
+    enabled: false
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.blogApp: INFO
+    com.blogApp.blogmedia: INFO
+    com.blogApp.blogcommon.security: INFO
+    org.springframework.security: INFO
+    org.springframework.cache: INFO
+    org.springframework.web: INFO
+    org.hibernate.SQL: INFO
+
+# Custom Properties
+blog:
+  media:
+    cache:
+      prefix: blog
+    security:
+      cors:
+        allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080,*}
+        allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+        allowed-headers: Authorization,Content-Type,X-Requested-With
+        max-age: 3600
+    image:
+      max-width: 1920
+      max-height: 1080
+      quality: 0.8
+      formats:
+        - jpg
+        - png
+        - webp
+
+# Swagger/OpenAPI Configuration
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method
+  packages-to-scan: com.blogApp.blogmedia.controller 

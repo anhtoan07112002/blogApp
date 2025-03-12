@@ -1,0 +1,151 @@
+server:
+  port: ${SERVER_PORT:8082}
+  servlet:
+    context-path: /api
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+app:
+  auth:
+    jwt:
+      secret: ${JWT_SECRET:QURGREFERkFERkFCRERGQURGNTY3ODkwNDU2Nzg5MEFCQ0RFRg==}
+      accessTokenExpirationMs: 900000      # 15 phút
+      refreshTokenExpirationMs: 604800000  # 7 ngày
+      token-type: Bearer
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://blog-auth-service:8081}
+
+spring:
+  application:
+    name: blog-post-service
+  messages:
+    encoding: UTF-8
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://mysql-post:3306/blog_post_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        format_sql: false
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+  redis:
+    host: ${SPRING_REDIS_HOST:redis}
+    port: ${SPRING_REDIS_PORT:6379}
+    password: ${SPRING_REDIS_PASSWORD:}
+    repositories:
+      enabled: false
+  cache:
+    type: redis
+    redis:
+      time-to-live: 3600000  # 1 hour in milliseconds
+      cache-null-values: false
+  cloud:
+    config:
+      enabled: false
+  # Cấu hình Jackson cho JSON
+  jackson:
+    serialization:
+      WRITE_DATES_AS_TIMESTAMPS: false
+      FAIL_ON_EMPTY_BEANS: false
+    deserialization:
+      FAIL_ON_UNKNOWN_PROPERTIES: false
+    time-zone: UTC
+    
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+  tracing:
+    enabled: false
+    sampling:
+      probability: 0.0
+  metrics:
+    tags:
+      application: ${spring.application.name}
+  zipkin:
+    tracing:
+      endpoint: http://localhost:9411/api/v2/spans
+    enabled: false
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_SERVER:http://localhost:8761/eureka/}
+    register-with-eureka: true
+    fetch-registry: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance-id:${random.value}}
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      auth-service:
+        slidingWindowSize: 10
+        failureRateThreshold: 50
+        waitDurationInOpenState: 10000
+        permittedNumberOfCallsInHalfOpenState: 5
+  retry:
+    instances:
+      auth-service:
+        maxRetryAttempts: 3
+        waitDuration: 1000
+  
+hibernate:
+  search:
+    backend:
+      type: lucene
+      directory:
+        root: /app/data/index
+
+logging:
+  level:
+    root: INFO
+    com.blogApp: INFO
+    org.springframework.security: INFO
+    org.springframework.cache: INFO
+    org.hibernate.SQL: INFO
+
+# Custom Properties
+blog:
+  post:
+    cache:
+      prefix: blog  
+    pagination:
+      default-page-size: 10
+      max-page-size: 100
+    security:
+      cors:
+        allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8080,*}
+        allowed-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+        allowed-headers: Authorization,Content-Type,X-Requested-With
+        max-age: 3600
+    markdown:
+      sanitize: true
+
+# Cấu hình Swagger/OpenAPI
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui
+    operationsSorter: method
+  packages-to-scan: com.blogApp.blogpost.controller 

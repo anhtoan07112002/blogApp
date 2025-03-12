@@ -28,7 +28,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final PasswordResetTokenRepository resetTokenRepository;
     private final CacheService cacheService;
-    // you can inject an EmailService here for sending emails
+    private final EmailService emailService;
 
     public UserProfile getUserProfile(String username) {
 
@@ -90,7 +90,7 @@ public class UserService {
         resetTokenRepository.save(resetToken);
 
         // Gửi email reset password
-        // emailService.sendPasswordResetEmail(user.getEmail(), token, user.getFirstName());
+        emailService.sendPasswordResetEmail(user.getEmail(), token, user.getFirstName());
     }
 
     @Transactional

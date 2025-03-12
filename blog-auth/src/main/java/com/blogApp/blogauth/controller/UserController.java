@@ -50,7 +50,7 @@ public class UserController {
      * @param email Email của người dùng
      * @return ResponseEntity không có nội dung
      */
-    @PostMapping("/reset-password")
+    @PostMapping("/forgot-password")
     @PreAuthorize("permitAll()")
     public ResponseEntity<ApiResponse<Void>> initiatePasswordReset(@RequestParam String email) {
         userService.initiatePasswordReset(email);

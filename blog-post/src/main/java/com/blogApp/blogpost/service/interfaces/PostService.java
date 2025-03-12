@@ -5,6 +5,7 @@ import com.blogApp.blogcommon.enums.PostStatus;
 import com.blogApp.blogpost.dto.request.PostCreateRequest;
 import com.blogApp.blogpost.dto.request.PostUpdateRequest;
 import com.blogApp.blogpost.dto.response.PostSummaryDTO;
+import com.blogApp.blogcommon.exception.UnauthorizedException;
 
 import java.util.UUID;
 
@@ -49,15 +50,19 @@ public interface PostService {
      * Cập nhật bài viết
      * @param id ID của bài viết
      * @param updatePostDTO Thông tin bài viết mới
+     * @param userId ID của người dùng thực hiện cập nhật
      * @return PostSummaryDTO chứa thông tin bài viết đã cập nhật
+     * @throws UnauthorizedException nếu người dùng không phải tác giả hoặc không có quyền admin
      */
-    PostSummaryDTO updatePost(UUID id, PostUpdateRequest updatePostDTO);
+    PostSummaryDTO updatePost(UUID id, PostUpdateRequest updatePostDTO, String userId);
 
     /**
      * Xóa bài viết
      * @param id ID của bài viết
+     * @param userId ID của người dùng thực hiện xóa
+     * @throws UnauthorizedException nếu người dùng không phải tác giả hoặc không có quyền admin
      */
-    void deletePost(UUID id);
+    void deletePost(UUID id, String userId);
 
     /**
      * Lấy tất cả bài viết
@@ -126,9 +131,11 @@ public interface PostService {
      * Cập nhật trạng thái bài viết
      * @param id ID của bài viết
      * @param status Trạng thái bài viết
+     * @param userId ID của người dùng thực hiện cập nhật
      * @return PostSummaryDTO chứa thông tin bài viết đã cập nhật
+     * @throws UnauthorizedException nếu người dùng không phải tác giả hoặc không có quyền admin
      */
-    PostSummaryDTO updatePostStatus(UUID id, PostStatus status);
+    PostSummaryDTO updatePostStatus(UUID id, PostStatus status, String userId);
 
     /**
      * Tăng số lượt xem bài viết

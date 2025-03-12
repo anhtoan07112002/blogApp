@@ -39,10 +39,8 @@ public interface CategoryMapper {
      * Map thông tin về parent và children
      * Tính số lượng bài viết
      */
-    @Mapping(target = "parentId", expression = "java(category.getParent() != null ? category.getParent().getId() : null)")
     @Mapping(target = "parentName", expression = "java(category.getParent() != null ? category.getParent().getName() : null)")
     @Mapping(target = "children", expression = "java(mapChildrenToSummaries(category.getChildren()))")
-    @Mapping(target = "postCount", expression = "java(category.getPosts().size())")
     CategoryDTO toDto(Category category);
 
     /**

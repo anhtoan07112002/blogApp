@@ -5,6 +5,8 @@ import com.blogApp.blogcommon.enums.PostStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.EqualsAndHashCode;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.Set;
@@ -18,8 +20,10 @@ import java.util.UUID;
  * - Sử dụng trong các API tìm kiếm và lọc bài viết
  */
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(callSuper = false)
 public class PostFilterRequest extends PageRequest {
     private String keyword;
     private Set<UUID> categoryIds;

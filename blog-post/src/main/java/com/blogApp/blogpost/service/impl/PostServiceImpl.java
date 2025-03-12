@@ -1,6 +1,8 @@
 package com.blogApp.blogpost.service.impl;
 
+import com.blogApp.blogcommon.dto.UserPrincipal;
 import com.blogApp.blogcommon.dto.response.PagedResponse;
+import com.blogApp.blogcommon.dto.response.UserSummary;
 import com.blogApp.blogcommon.service.CacheService;
 import com.blogApp.blogpost.client.AuthServiceClient;
 import com.blogApp.blogpost.dto.request.PostCreateRequest;
@@ -39,6 +41,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.blogApp.blogcommon.dto.response.UserProfile;
+import com.blogApp.blogcommon.exception.UnauthorizedException;
+import com.blogApp.blogpost.exception.UnauthorizedPostActionException;
 
 /**
  * Service class triển khai các chức năng quản lý bài viết, bao gồm:
@@ -89,11 +93,9 @@ public class PostServiceImpl implements PostService {
     public PostSummaryDTO createPost(PostCreateRequest createPostRequest, String userId) {
         log.info("Bắt đầu tạo bài viết mới cho user {}", userId);
         
-        UserProfile userInfo = authServiceClient.getUserInfo(userId)
-                .orElseThrow(() -> {
-                    log.error("Không tìm thấy thông tin user với id {}", userId);
-                    return new ResourceNotFoundException("User", "id", userId);
-                });
+        // Lấy thông tin user hiện tại từ token
+        UserSummary userInfo = authServiceClient.getCurrentUser()
+                .getData();
 
         Post post = new Post();
         post.setTitle(createPostRequest.getTitle());
@@ -101,7 +103,7 @@ public class PostServiceImpl implements PostService {
         post.setSummary(createPostRequest.getSummary());
         post.setStatus(createPostRequest.getStatus());
         post.setCommentEnabled(createPostRequest.isCommentEnabled());
-        post.setAuthorId(Long.toString(userInfo.getId()));
+        post.setAuthorId(userInfo.getId().toString());
         post.setAuthorName(userInfo.getUsername());
         post.setViewCount(0);
 
@@ -228,14 +230,30 @@ public class PostServiceImpl implements PostService {
      */
     @Override
     @Transactional
-    public PostSummaryDTO updatePost(UUID id, PostUpdateRequest updatePostRequest) {
-        log.info("Bắt đầu cập nhật bài viết {}", id);
+    public PostSummaryDTO updatePost(UUID id, PostUpdateRequest updatePostRequest, String userId) {
+        log.info("Bắt đầu cập nhật bài viết {} bởi người dùng {}", id, userId);
         
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Không tìm thấy bài viết với id {}", id);
                     return new ResourceNotFoundException("Post", "id", id.toString());
                 });
+
+        // Kiểm tra xem người cập nhật có phải là tác giả không
+        if (!post.getAuthorId().equals(userId)) {
+            // Kiểm tra xem người cập nhật có phải admin không
+            UserSummary currentUser = authServiceClient.getCurrentUser().getData();
+            boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
+            
+            if (!isAdmin) {
+                log.error("Người dùng {} không có quyền cập nhật bài viết {}", userId, id);
+                throw UnauthorizedPostActionException.notAuthorOrAdmin();
+            }
+            
+            log.info("Admin {} cập nhật bài viết của người dùng {}", userId, post.getAuthorId());
+        } else {
+            log.info("Tác giả cập nhật bài viết của chính mình");
+        }
 
         post.setTitle(updatePostRequest.getTitle());
         post.setContent(updatePostRequest.getContent());
@@ -260,25 +278,21 @@ public class PostServiceImpl implements PostService {
             }
         }
 
-        // Update categories
+        // Update categories if provided
         if (updatePostRequest.getCategoryIds() != null) {
-            // Clear existing categories
-            new HashSet<>(post.getCategories()).forEach(post::removeCategory);
-
-            // Add new categories
+            post.getCategories().clear();
+            
             updatePostRequest.getCategoryIds().forEach(categoryId -> {
                 Category category = categoryRepository.findById(categoryId)
                         .orElseThrow(() -> new ResourceNotFoundException("Category", "id", categoryId.toString()));
-                post.addCategory(category);
+                post.getCategories().add(category);
             });
         }
 
-        // Update tags
+        // Update tags if provided
         if (updatePostRequest.getTags() != null) {
-            // Clear existing tags
-            new HashSet<>(post.getTags()).forEach(post::removeTag);
-
-            // Add new tags
+            post.getTags().clear();
+            
             updatePostRequest.getTags().forEach(tagName -> {
                 Tag tag = tagRepository.findByName(tagName)
                         .orElseGet(() -> {
@@ -287,19 +301,20 @@ public class PostServiceImpl implements PostService {
                             newTag.setSlug(slugUtils.createSlug(tagName));
                             return tagRepository.save(newTag);
                         });
-                post.addTag(tag);
+                post.getTags().add(tag);
             });
         }
 
         Post updatedPost = postRepository.save(post);
-        log.info("Đã cập nhật thành công bài viết {}", id);
-
-        // Xóa cache liên quan
+        
+        // Xóa cache để cập nhật dữ liệu
         cacheService.delete(POST_CACHE_TYPE, "id:" + id);
         cacheService.delete(POST_CACHE_TYPE, "slug:" + post.getSlug());
         cacheService.delete(POST_LIST_CACHE_TYPE, "author:" + post.getAuthorId());
         cacheService.delete(POST_LIST_CACHE_TYPE, "status:" + post.getStatus());
-
+        
+        log.info("Đã cập nhật thành công bài viết {}", id);
+        
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(updatedPost));
         postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
         return postDTO;
@@ -307,14 +322,30 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public void deletePost(UUID id) {
-        log.info("Bắt đầu xóa bài viết {}", id);
+    public void deletePost(UUID id, String userId) {
+        log.info("Bắt đầu xóa bài viết {} bởi người dùng {}", id, userId);
         
         Post post = postRepository.findById(id)
                 .orElseThrow(() -> {
                     log.error("Không tìm thấy bài viết với id {}", id);
                     return new ResourceNotFoundException("Post", "id", id.toString());
                 });
+
+        // Kiểm tra xem người xóa có phải là tác giả không
+        if (!post.getAuthorId().equals(userId)) {
+            // Kiểm tra xem người xóa có phải admin không
+            UserSummary currentUser = authServiceClient.getCurrentUser().getData();
+            boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
+            
+            if (!isAdmin) {
+                log.error("Người dùng {} không có quyền xóa bài viết {}", userId, id);
+                throw UnauthorizedPostActionException.notAuthorOrAdmin();
+            }
+            
+            log.info("Admin {} xóa bài viết của người dùng {}", userId, post.getAuthorId());
+        } else {
+            log.info("Tác giả xóa bài viết của chính mình");
+        }
 
         // Xóa cache trước khi xóa bài viết
         cacheService.delete(POST_CACHE_TYPE, "id:" + id);
@@ -479,9 +510,30 @@ public class PostServiceImpl implements PostService {
 
     @Override
     @Transactional
-    public PostSummaryDTO updatePostStatus(UUID id, PostStatus status) {
+    public PostSummaryDTO updatePostStatus(UUID id, PostStatus status, String userId) {
+        log.info("Bắt đầu cập nhật trạng thái bài viết {} sang {} bởi người dùng {}", id, status, userId);
+        
         Post post = postRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Post", "id", id.toString()));
+                .orElseThrow(() -> {
+                    log.error("Không tìm thấy bài viết với id {}", id);
+                    return new ResourceNotFoundException("Post", "id", id.toString());
+                });
+                
+        // Kiểm tra xem người cập nhật có phải là tác giả không
+        if (!post.getAuthorId().equals(userId)) {
+            // Kiểm tra xem người cập nhật có phải admin không
+            UserSummary currentUser = authServiceClient.getCurrentUser().getData();
+            boolean isAdmin = currentUser.getRole().equals("ROLE_ADMIN");
+            
+            if (!isAdmin) {
+                log.error("Người dùng {} không có quyền cập nhật trạng thái bài viết {}", userId, id);
+                throw UnauthorizedPostActionException.cannotUpdateStatus();
+            }
+            
+            log.info("Admin {} cập nhật trạng thái bài viết của người dùng {}", userId, post.getAuthorId());
+        } else {
+            log.info("Tác giả cập nhật trạng thái bài viết của chính mình");
+        }
 
         post.setStatus(status);
 
@@ -497,7 +549,9 @@ public class PostServiceImpl implements PostService {
         cacheService.delete(POST_CACHE_TYPE, "slug:" + post.getSlug());
         cacheService.delete(POST_LIST_CACHE_TYPE, "author:" + post.getAuthorId());
         cacheService.delete(POST_LIST_CACHE_TYPE, "status:" + status);
-
+        
+        log.info("Đã cập nhật thành công trạng thái bài viết {} sang {}", id, status);
+        
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(updatedPost));
         postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
         return postDTO;

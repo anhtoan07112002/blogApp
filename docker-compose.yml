@@ -1,0 +1,168 @@
+services:
+  # Eureka Server
+  blog-eureka:
+    build:
+      context: .
+      dockerfile: blog-eureka/Dockerfile
+    container_name: blog-eureka-server
+    ports:
+      - "8761:8761"
+    environment:
+      - SERVER_PORT=8761
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - EUREKA_HOST=${EUREKA_HOST}
+    restart: unless-stopped
+    networks:
+      - blog-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MySQL cho blog-auth
+  mysql-auth:
+    image: mysql:8.0
+    container_name: blog-auth-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-auth-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # MySQL cho blog-post
+  mysql-post:
+    image: mysql:8.0
+    container_name: blog-post-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_POST_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_POST_DATABASE}
+      MYSQL_USER: ${MYSQL_POST_USER}
+      MYSQL_PASSWORD: ${MYSQL_POST_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql-post-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_POST_ROOT_PASSWORD"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # Redis cho cache và session (shared service)
+  redis:
+    image: redis:7.0-alpine
+    container_name: blog-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # Blog Auth Service
+  blog-auth:
+    build:
+      context: .
+      dockerfile: blog-auth/Dockerfile
+    container_name: blog-auth-service
+    depends_on:
+      mysql-auth:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      blog-eureka:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST}
+      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SERVER_PORT=${SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - MAIL_HOST=${MAIL_HOST}
+      - MAIL_PORT=${MAIL_PORT}
+      - MAIL_USERNAME=${MAIL_USERNAME}
+      - MAIL_PASSWORD=${MAIL_PASSWORD}
+      - EUREKA_SERVER=${EUREKA_SERVER}
+    ports:
+      - "${SERVER_PORT}:${SERVER_PORT}"
+    restart: unless-stopped
+    networks:
+      - blog-network
+    
+  # Blog Post Service
+  blog-post:
+    build:
+      context: .
+      dockerfile: blog-post/Dockerfile
+    container_name: blog-post-service
+    depends_on:
+      mysql-post:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      blog-auth:
+        condition: service_started
+      blog-eureka:
+        condition: service_healthy
+    environment:
+      - SPRING_DATASOURCE_URL=${SPRING_POST_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_POST_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_POST_DATASOURCE_PASSWORD}
+      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST}
+      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
+      - SERVER_PORT=${POST_SERVER_PORT}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
+      - EUREKA_SERVER=${EUREKA_SERVER}
+    ports:
+      - "${POST_SERVER_PORT}:${POST_SERVER_PORT}"
+    volumes:
+      - lucene-index-data:/app/data/index
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+volumes:
+  mysql-auth-data:
+    name: blog-auth-mysql-data
+  mysql-post-data:
+    name: blog-post-mysql-data
+  redis-data:
+    name: blog-redis-data
+  lucene-index-data:
+    name: blog-post-lucene-index-data
+
+networks:
+  blog-network:
+    name: blog-network
+    external: true 

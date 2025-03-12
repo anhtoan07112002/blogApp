@@ -31,3 +31,41 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Security ###
+# Local configuration files
+# Keep application.yml.example in git, but ignore all others that might contain secrets
+src/main/resources/application-dev.yml
+src/main/resources/application-prod.yml
+src/main/resources/application-*.yml
+src/main/resources/application.yml
+!src/main/resources/application.yml.example
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Keystore files
+*.keystore
+*.jks
+*.p12
+
+# Logs
+*.log
+logs/
+
+# Data files
+data/index/
+lucene/
+
+# Compiled JAR files
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Docker volumes
+docker/volumes/
+
+# OS specific
+.DS_Store
+Thumbs.db

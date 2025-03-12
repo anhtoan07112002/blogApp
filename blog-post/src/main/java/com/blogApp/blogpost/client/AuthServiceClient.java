@@ -1,45 +1,34 @@
 package com.blogApp.blogpost.client;
 
 import com.blogApp.blogcommon.dto.response.UserProfile;
-import com.blogApp.blogpost.config.FeignClientConfig;
-import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
-import io.github.resilience4j.retry.annotation.Retry;
+import com.blogApp.blogcommon.dto.response.UserSummary;
+import com.blogApp.blogcommon.dto.response.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 
-import java.util.Optional;
-
 /**
  * Client interface để giao tiếp với Auth Service
- * - Sử dụng FeignClient để tạo HTTP client
+ * - Chỉ lấy các thông tin cần thiết cho Post Service
  * - Có tích hợp circuit breaker để xử lý lỗi
  * - Có cơ chế retry khi gọi service thất bại
  */
-@FeignClient(
-        name = "blog-auth-service",
-        path = "/api/auth",
-        configuration = FeignClientConfig.class
-)
+@FeignClient(name = "auth-service", url = "${app.auth-service.url:http://localhost:8081}")
 public interface AuthServiceClient {
 
     /**
-     * Lấy thông tin user profile từ Auth Service
-     * - Có circuit breaker để fallback khi service lỗi
-     * - Có retry khi gọi thất bại
-     * @param userId ID của user cần lấy thông tin
-     * @return Optional<UserProfile> chứa thông tin user nếu tìm thấy
+     * Lấy thông tin profile của user để hiển thị trong bài viết
+     * @param username username của user cần lấy thông tin
+     * @return UserProfile chứa thông tin cơ bản của user
      */
-    @GetMapping("/users/{userId}")
-    @CircuitBreaker(name = "auth-service", fallbackMethod = "getUserInfoFallback")
-    @Retry(name = "auth-service")
-    Optional<UserProfile> getUserInfo(@PathVariable("userId") String userId);
+    @GetMapping("/api/auth/users/{username}")
+    ApiResponse<UserProfile> getUserProfile(@PathVariable("username") String username);
 
     /**
-     * Phương thức fallback khi không thể gọi Auth Service
-     * @return Optional.empty() để xử lý gracefully
+     * Lấy thông tin user hiện tại từ token
+     * - Dùng để xác thực và lấy role của user
+     * @return UserSummary chứa thông tin user và role
      */
-    default Optional<UserProfile> getUserInfoFallback(String userId, Exception exception) {
-        return Optional.empty();
-    }
+    @GetMapping("/api/auth/me")
+    ApiResponse<UserSummary> getCurrentUser();
 }

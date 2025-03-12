@@ -1,0 +1,37 @@
+server:
+  port: ${SERVER_PORT:8761}
+
+eureka:
+  client:
+    register-with-eureka: false  # Không đăng ký chính nó với Eureka
+    fetch-registry: false        # Không lấy danh sách từ Eureka khác
+    service-url:
+      defaultZone: http://${EUREKA_HOST:localhost}:${SERVER_PORT:8761}/eureka/
+  server:
+    enable-self-preservation: true
+    renewal-percent-threshold: 0.85
+    wait-time-in-ms-when-sync-empty: 5
+    response-cache-update-interval-ms: 30000
+    use-read-only-response-cache: true
+
+spring:
+  application:
+    name: EUREKA-SERVER
+  freemarker:
+    template-loader-path: classpath:/templates/
+    prefer-file-system-access: false
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    com.netflix.eureka: INFO
+    com.netflix.discovery: INFO
+    org.springframework.cloud.netflix.eureka: INFO 

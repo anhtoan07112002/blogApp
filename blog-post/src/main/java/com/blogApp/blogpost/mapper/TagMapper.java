@@ -29,5 +29,8 @@ public interface TagMapper {
     @Mapping(target = "posts", ignore = true)
     Tag toEntity(TagCreateRequest request);
 
+    /**
+     * Chuyển từ entity sang DTO
+     */
     TagDTO toDto(Tag tag);
 }

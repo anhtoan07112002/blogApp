@@ -59,7 +59,16 @@ public class AuthSecurityConfig {
                 .formLogin(form -> form.disable())
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/signup", "/login", "/refresh-token", "/forgot-password/**", "/test").permitAll()
+                        // Swagger UI endpoints
+                        .requestMatchers(
+                            "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**",
+                            "/api/auth/swagger-ui/**", "/api/auth/swagger-ui.html", "/api/auth/v3/api-docs/**", "/api/auth/webjars/**",
+                            "/swagger-resources/**", "/swagger-resources", "/swagger-resources/configuration/ui",
+                            "/swagger-resources/configuration/security"
+                        ).permitAll()
+                        // All other endpoints require authentication
                         .anyRequest().authenticated());
 
         http.addFilterBefore(tokenAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

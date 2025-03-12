@@ -59,13 +59,15 @@ public class Post {
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private PostStatus status;
+    @Builder.Default
+    private PostStatus status = PostStatus.DRAFT;
 
     @Column(nullable = false)
     private boolean commentEnabled;
 
     @Column
-    private Integer viewCount;
+    @Builder.Default
+    private Integer viewCount = 0;
 
     @Column
     private LocalDateTime publishedAt;
@@ -96,6 +98,9 @@ public class Post {
 
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private Set<Comment> comments = new HashSet<>();
+
+    @Builder.Default
+    private boolean isPublished = false;
 
     public void addCategory(Category category) {
         categories.add(category);

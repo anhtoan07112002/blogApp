@@ -4,6 +4,7 @@ import com.blogApp.blogcommon.dto.response.PagedResponse;
 import com.blogApp.blogpost.dto.request.CommentCreateRequest;
 import com.blogApp.blogpost.dto.response.CommentDTO;
 import com.blogApp.blogpost.model.CommentStatus;
+import com.blogApp.blogcommon.exception.UnauthorizedException;
 
 import java.util.UUID;
 
@@ -40,15 +41,19 @@ public interface CommentService {
      * Cập nhật nội dung bình luận
      * @param id ID của bình luận
      * @param content Nội dung mới
+     * @param userId ID của người dùng thực hiện cập nhật
      * @return CommentDTO chứa thông tin bình luận đã cập nhật
+     * @throws UnauthorizedException nếu người dùng không phải tác giả của bình luận hoặc không có quyền admin
      */
-    CommentDTO updateComment(UUID id, String content);
+    CommentDTO updateComment(UUID id, String content, String userId);
 
     /**
      * Xóa bình luận
      * @param id ID của bình luận
+     * @param userId ID của người dùng thực hiện xóa
+     * @throws UnauthorizedException nếu người dùng không phải tác giả của bình luận hoặc không có quyền admin
      */
-    void deleteComment(UUID id);
+    void deleteComment(UUID id, String userId);
 
     /**
      * Lấy danh sách bình luận của bài viết
@@ -60,6 +65,16 @@ public interface CommentService {
     PagedResponse<CommentDTO> getCommentsByPost(UUID postId, int pageNo, int pageSize);
 
     /**
+     * Lấy danh sách bình luận của bài viết với tùy chọn bao gồm tất cả trạng thái
+     * @param postId ID của bài viết
+     * @param pageNo Số trang
+     * @param pageSize Kích thước trang
+     * @param includeAllStatuses true để bao gồm tất cả trạng thái, false để chỉ lấy APPROVED
+     * @return PagedResponse<CommentDTO> chứa danh sách bình luận
+     */
+    PagedResponse<CommentDTO> getCommentsByPost(UUID postId, int pageNo, int pageSize, boolean includeAllStatuses);
+
+    /**
      * Lấy danh sách bình luận của tác giả
      * @param authorId ID của tác giả
      * @param pageNo Số trang
@@ -67,6 +82,16 @@ public interface CommentService {
      * @return PagedResponse<CommentDTO> chứa danh sách bình luận
      */
     PagedResponse<CommentDTO> getCommentsByAuthor(String authorId, int pageNo, int pageSize);
+
+    /**
+     * Lấy danh sách bình luận của tác giả với tùy chọn bao gồm tất cả trạng thái
+     * @param authorId ID của tác giả
+     * @param pageNo Số trang
+     * @param pageSize Kích thước trang
+     * @param includeAllStatuses true để bao gồm tất cả trạng thái, false để chỉ lấy APPROVED
+     * @return PagedResponse<CommentDTO> chứa danh sách bình luận
+     */
+    PagedResponse<CommentDTO> getCommentsByAuthor(String authorId, int pageNo, int pageSize, boolean includeAllStatuses);
 
     /**
      * Lấy danh sách bình luận theo trạng thái

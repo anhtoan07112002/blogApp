@@ -1,10 +1,10 @@
 package com.blogApp.blogmedia.config;
 
 import com.blogApp.blogcommon.config.CommonSecurityConfig;
-import com.blogApp.blogcommon.security.CustomUserDetailsService;
 import com.blogApp.blogcommon.security.TokenAuthenticationFilter;
 import com.blogApp.blogcommon.security.TokenProvider;
 import com.blogApp.blogcommon.service.CacheService;
+import com.blogApp.blogmedia.security.MediaUserDetailsServiceAdapter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -54,12 +54,12 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 public class MediaSecurityConfig {
 
     private final TokenProvider tokenProvider;
-    private final CustomUserDetailsService customUserDetailsService;
+    private final MediaUserDetailsServiceAdapter userDetailsService;
     private final CacheService cacheService;
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
-        return new TokenAuthenticationFilter(tokenProvider, customUserDetailsService, cacheService);
+        return new TokenAuthenticationFilter(tokenProvider, userDetailsService, cacheService);
     }
 
     @Bean
@@ -73,6 +73,7 @@ public class MediaSecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // Cho phép truy cập công khai vào các API đọc media
                         .requestMatchers("/media/public/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**").permitAll()
                         
                         // API quản lý yêu cầu role ADMIN
                         .requestMatchers("/media/admin/**").hasRole("ADMIN")
