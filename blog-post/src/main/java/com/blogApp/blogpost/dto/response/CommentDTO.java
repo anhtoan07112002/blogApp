@@ -1,6 +1,7 @@
 package com.blogApp.blogpost.dto.response;
 
 import com.blogApp.blogpost.model.CommentStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,15 +23,32 @@ import java.util.UUID;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "Thông tin bình luận của bài viết")
 public class CommentDTO {
+    @Schema(description = "ID duy nhất của bình luận", example = "123e4567-e89b-12d3-a456-426614174000")
     private UUID id;
-    private String content;
-    private String authorId;
-    private String authorName;
-    private CommentStatus status;
+    
+    @Schema(description = "ID của bài viết được bình luận", example = "123e4567-e89b-12d3-a456-426614174001")
     private UUID postId;
+    
+    @Schema(description = "ID của người bình luận", example = "123e4567-e89b-12d3-a456-426614174002")
+    private UUID userId;
+    
+    @Schema(description = "Tên người bình luận", example = "Nguyễn Văn A")
+    private String userName;
+    
+    @Schema(description = "Nội dung bình luận", example = "Bài viết rất hay và bổ ích!")
+    private String content;
+    
+    @Schema(description = "ID của bình luận cha (nếu đây là bình luận phản hồi)", example = "123e4567-e89b-12d3-a456-426614174003")
     private UUID parentId;
+    
+    @Schema(description = "Thời điểm bình luận được tạo")
     private LocalDateTime createdAt;
+    
+    @Schema(description = "Thời điểm bình luận được cập nhật gần nhất")
     private LocalDateTime updatedAt;
+    
+    @Schema(description = "Danh sách các bình luận phản hồi")
     private Set<CommentDTO> replies;
 }

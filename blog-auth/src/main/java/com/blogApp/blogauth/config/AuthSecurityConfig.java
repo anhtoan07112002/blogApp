@@ -18,6 +18,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.beans.factory.annotation.Value;
 
 @Configuration
 @EnableWebSecurity
@@ -31,6 +32,9 @@ public class AuthSecurityConfig {
     
     @Autowired
     private PasswordEncoder passwordEncoder;
+
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {

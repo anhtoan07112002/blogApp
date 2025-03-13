@@ -1,28 +1,53 @@
-FROM openjdk:17-jdk-slim AS builder
+# Giai đoạn build: Sử dụng image Maven chính thức
+FROM maven:3.9-eclipse-temurin-17 AS builder
 
 WORKDIR /app
 
-# Sao chép toàn bộ mã nguồn
+# Copy toàn bộ dự án vào container
 COPY . .
 
-# Build ứng dụng
-RUN apt-get update && apt-get install -y maven
+# Build parent POM trước
+WORKDIR /app
+RUN mvn clean install -N
+
+# Build blog-common sau
+WORKDIR /app/blog-common
+RUN mvn clean install -DskipTests
+
+# Cuối cùng build blog-auth
+WORKDIR /app/blog-auth
 RUN mvn clean package -DskipTests
 
-# Giai đoạn runtime
-FROM openjdk:17-jdk-slim
+# Giai đoạn runtime: Sử dụng image JRE nhẹ hơn
+FROM eclipse-temurin:17-jre-alpine
 
 WORKDIR /app
 
 # Sao chép file JAR từ giai đoạn build
 COPY --from=builder /app/blog-auth/target/blog-auth-*.jar blog-auth.jar
 
+# Định nghĩa các ARG với giá trị mặc định
+ARG PROFILE=prod
+ARG PORT=8081
+ARG DB_URL=jdbc:mysql://mysql-auth:3306/blog_auth_db
+ARG DB_USERNAME=blog_auth_user
+ARG DB_PASSWORD=Auth@Secure456!
+ARG REDIS_HOST=redis
+ARG REDIS_PORT=6379
+ARG EUREKA_URL=http://blog-eureka-server:8761/eureka/
+
 # Biến môi trường
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV SERVER_PORT=8081
+ENV SPRING_PROFILES_ACTIVE=${PROFILE}
+ENV SERVER_PORT=${PORT}
+ENV SPRING_DATASOURCE_URL=${DB_URL}
+ENV SPRING_DATASOURCE_USERNAME=${DB_USERNAME}
+ENV SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+ENV SPRING_REDIS_HOST=${REDIS_HOST}
+ENV SPRING_REDIS_PORT=${REDIS_PORT}
+ENV EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=${EUREKA_URL}
 
 # Expose port
-EXPOSE 8081
+EXPOSE ${PORT}
 
 # Khởi chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "blog-auth.jar"] 

@@ -8,22 +8,35 @@ import io.swagger.v3.oas.models.info.License;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
 import io.swagger.v3.oas.models.servers.Server;
+import io.swagger.v3.oas.models.tags.Tag;
+
+import org.springdoc.core.models.GroupedOpenApi;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import java.util.List;
 
 @Configuration
-public class OpenApiConfig {
+public class OpenApiConfig implements WebMvcConfigurer {
 
     @Value("${server.servlet.context-path}")
     private String contextPath;
 
     @Bean
+    public GroupedOpenApi publicApi() {
+        return GroupedOpenApi.builder()
+                .group("public-api")
+                .pathsToMatch("/**")
+                .build();
+    }
+
+    @Bean
     public OpenAPI customOpenAPI() {
         final String securitySchemeName = "bearerAuth";
-        
+
         return new OpenAPI()
                 .info(new Info()
                         .title("Blog Authentication API")
@@ -39,7 +52,10 @@ public class OpenApiConfig {
                 .servers(List.of(
                         new Server()
                                 .url("http://localhost:8081" + contextPath)
-                                .description("Local Development Server")
+                                .description("Local Development Server"),
+                        new Server()
+                                .url("http://prod-server:8081" + contextPath)
+                                .description("Production Server")
                 ))
                 .addSecurityItem(new SecurityRequirement().addList(securitySchemeName))
                 .components(new Components()
@@ -48,6 +64,11 @@ public class OpenApiConfig {
                                 .type(SecurityScheme.Type.HTTP)
                                 .scheme("bearer")
                                 .bearerFormat("JWT")
-                                .description("JWT Token Authentication. Nhập token không có tiền tố 'Bearer '.")));
+                                .description("JWT Token Authentication. Nhập token không có tiền tố 'Bearer '.")))
+                .tags(List.of(
+                        new Tag().name("Authentication").description("API xác thực người dùng (đăng nhập, đăng ký, đăng xuất)"),
+                        new Tag().name("User").description("API quản lý thông tin người dùng"),
+                        new Tag().name("Password").description("API quản lý mật khẩu (đổi, reset)")
+                ));
     }
-} 
+}

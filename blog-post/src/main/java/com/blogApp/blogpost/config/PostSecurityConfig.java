@@ -6,6 +6,7 @@ import com.blogApp.blogcommon.security.TokenProvider;
 import com.blogApp.blogcommon.service.CacheService;
 import com.blogApp.blogpost.security.PostUserDetailsServiceAdapter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
@@ -34,6 +35,9 @@ public class PostSecurityConfig {
     private final TokenProvider tokenProvider;
     private final PostUserDetailsServiceAdapter userDetailsService;
     private final CacheService cacheService;
+    
+    @Value("${server.servlet.context-path}")
+    private String contextPath;
 
     @Bean
     public TokenAuthenticationFilter tokenAuthenticationFilter() {
@@ -58,7 +62,17 @@ public class PostSecurityConfig {
                         .requestMatchers("/posts/public/**", "/posts/{slug}").permitAll()
                         .requestMatchers("/categories/**", "/tags/**").permitAll()
                         .requestMatchers("/comments/public/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**").permitAll()
+
+                        // Cho phép truy cập vào tất cả các endpoint Swagger
+                        .requestMatchers(
+                            "/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**", "/webjars/**",
+                            contextPath + "/swagger-ui/**", contextPath + "/swagger-ui.html", 
+                            contextPath + "/v3/api-docs/**", contextPath + "/webjars/**",
+                            "/swagger-resources/**", "/swagger-resources", 
+                            "/swagger-resources/configuration/ui",
+                            "/swagger-resources/configuration/security"
+                        ).permitAll()
+
                         // API quản lý yêu cầu xác thực
                         .requestMatchers("/posts/admin/**").hasRole("ADMIN")
                         .requestMatchers("/posts/update/**").authenticated()
@@ -70,4 +84,3 @@ public class PostSecurityConfig {
         return http.build();
     }
 }
-

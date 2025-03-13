@@ -167,7 +167,7 @@ public class PostServiceImpl implements PostService {
         cacheService.delete(POST_LIST_CACHE_TYPE, "status:" + savedPost.getStatus());
 
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(savedPost));
-        postDTO.setCommentCount(0L);
+        postDTO.setCommentCount(0);
         return postDTO;
     }
 
@@ -191,7 +191,7 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "id", id.toString()));
 
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(post));
-        postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
+        postDTO.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED)));
 
         // Lưu vào cache
         cacheService.set(POST_CACHE_TYPE, cacheKey, postDTO, cacheTtl / 1000, TimeUnit.SECONDS);
@@ -213,7 +213,7 @@ public class PostServiceImpl implements PostService {
                 .orElseThrow(() -> new ResourceNotFoundException("Post", "slug", slug));
 
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(post));
-        postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(post.getId(), CommentStatus.APPROVED));
+        postDTO.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(post.getId(), CommentStatus.APPROVED)));
 
         // Lưu vào cache
         cacheService.set(POST_CACHE_TYPE, cacheKey, postDTO, cacheTtl / 1000, TimeUnit.SECONDS);
@@ -316,7 +316,7 @@ public class PostServiceImpl implements PostService {
         log.info("Đã cập nhật thành công bài viết {}", id);
         
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(updatedPost));
-        postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
+        postDTO.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED)));
         return postDTO;
     }
 
@@ -553,7 +553,7 @@ public class PostServiceImpl implements PostService {
         log.info("Đã cập nhật thành công trạng thái bài viết {} sang {}", id, status);
         
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(updatedPost));
-        postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
+        postDTO.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED)));
         return postDTO;
     }
 
@@ -577,7 +577,7 @@ public class PostServiceImpl implements PostService {
         cacheService.delete(POST_CACHE_TYPE, "slug:" + post.getSlug());
 
         PostSummaryDTO postDTO = convertToPostSummaryDTO(postMapper.toSummaryDto(updatedPost));
-        postDTO.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED));
+        postDTO.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(id, CommentStatus.APPROVED)));
         return postDTO;
     }
 
@@ -594,7 +594,7 @@ public class PostServiceImpl implements PostService {
         List<Post> posts = postPage.getContent();
         List<PostSummaryDTO> postDTOs = posts.stream().map(post -> {
             PostSummaryDTO dto = convertToPostSummaryDTO(postMapper.toSummaryDto(post));
-            dto.setCommentCount(commentRepository.countCommentsByPostIdAndStatus(post.getId(), CommentStatus.APPROVED));
+            dto.setCommentCount(Math.toIntExact(commentRepository.countCommentsByPostIdAndStatus(post.getId(), CommentStatus.APPROVED)));
 
             // Convert markdown to HTML if needed
             if (post.getContent() != null) {
@@ -613,8 +613,10 @@ public class PostServiceImpl implements PostService {
                 .pageNo(postPage.getNumber())
                 .size(postPage.getSize())
                 .totalElements(postPage.getTotalElements())
-                .totalPages(postPage.getTotalPages())
+                .totalPages(Math.toIntExact(postPage.getTotalPages()))
                 .last(postPage.isLast())
+                .first(postPage.isFirst())
+                .empty(postPage.isEmpty())
                 .build();
     }
 
@@ -637,7 +639,7 @@ public class PostServiceImpl implements PostService {
                 .publishedAt(dto.getPublishedAt())
                 .createdAt(dto.getCreatedAt())
                 .categories(dto.getCategories().stream()
-                        .map(category -> CategoryDTO.builder()
+                        .map(category -> com.blogApp.blogcommon.dto.CategorySummaryDTO.builder()
                                 .id(category.getId())
                                 .name(category.getName())
                                 .slug(category.getSlug())

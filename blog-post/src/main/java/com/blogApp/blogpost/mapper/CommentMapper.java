@@ -11,6 +11,7 @@ import org.mapstruct.factory.Mappers;
 
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.UUID;
 
 /**
  * Interface mapper để chuyển đổi giữa các đối tượng liên quan đến Comment
@@ -68,12 +69,11 @@ public interface CommentMapper {
                 .filter(reply -> reply.getStatus() == CommentStatus.APPROVED)
                 .map(reply -> new CommentDTO(
                         reply.getId(),
-                        reply.getContent(),
-                        reply.getAuthorId(),
-                        reply.getAuthorName(),
-                        reply.getStatus(),
                         reply.getPost().getId(),
-                        reply.getParent().getId(),
+                        UUID.fromString(reply.getAuthorId()),
+                        reply.getAuthorName(),
+                        reply.getContent(),
+                        reply.getParent() != null ? reply.getParent().getId() : null,
                         reply.getCreatedAt(),
                         reply.getUpdatedAt(),
                         Set.of() // Tránh đệ quy sâu

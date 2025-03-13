@@ -20,13 +20,18 @@ RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
 # Sao chép file JAR từ giai đoạn build
 COPY --from=builder /app/blog-eureka/target/blog-eureka-*.jar blog-eureka.jar
 
-# Biến môi trường
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV SERVER_PORT=8761
-ENV EUREKA_HOST=localhost
+# Định nghĩa các ARG với giá trị mặc định
+ARG PROFILE=prod
+ARG PORT=8761
+ARG EUREKA_HOST=blog-eureka-server
+
+# Biến môi trường 
+ENV SPRING_PROFILES_ACTIVE=${PROFILE}
+ENV SERVER_PORT=${PORT}
+ENV EUREKA_HOST=${EUREKA_HOST}
 
 # Expose port
-EXPOSE 8761
+EXPOSE ${PORT}
 
 # Khởi chạy ứng dụng
 ENTRYPOINT ["java", "-jar", "blog-eureka.jar"]

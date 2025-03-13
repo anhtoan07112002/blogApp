@@ -4,13 +4,17 @@ services:
     build:
       context: .
       dockerfile: blog-eureka/Dockerfile
+      args:
+        - PROFILE=${SPRING_PROFILES_ACTIVE:-prod}
+        - PORT=8761
+        - EUREKA_HOST=blog-eureka-server
     container_name: blog-eureka-server
     ports:
       - "8761:8761"
     environment:
       - SERVER_PORT=8761
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - EUREKA_HOST=${EUREKA_HOST}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - EUREKA_HOST=blog-eureka-server
     restart: unless-stopped
     networks:
       - blog-network
@@ -26,16 +30,16 @@ services:
     image: mysql:8.0
     container_name: blog-auth-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-0}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-blog_auth_db}
+      MYSQL_USER: ${MYSQL_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-0}
     ports:
       - "3306:3306"
     volumes:
       - mysql-auth-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-0}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -48,16 +52,37 @@ services:
     image: mysql:8.0
     container_name: blog-post-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_POST_ROOT_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_POST_DATABASE}
-      MYSQL_USER: ${MYSQL_POST_USER}
-      MYSQL_PASSWORD: ${MYSQL_POST_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_POST_ROOT_PASSWORD:-0}
+      MYSQL_DATABASE: ${MYSQL_POST_DATABASE:-blog_post_db}
+      MYSQL_USER: ${MYSQL_POST_USER:-root}
+      MYSQL_PASSWORD: ${MYSQL_POST_PASSWORD:-0}
     ports:
       - "3307:3306"
     volumes:
       - mysql-post-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$$MYSQL_POST_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_POST_ROOT_PASSWORD:-0}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # PostgreSQL cho blog-media
+  postgres-media:
+    image: postgres:15-alpine
+    container_name: blog-postgres-media
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-StrongPostgresPassword!}
+      - POSTGRES_DB=${POSTGRES_DB:-blog_media_db}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-media-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -83,11 +108,42 @@ services:
     networks:
       - blog-network
 
+  # MinIO cho lưu trữ media
+  minio:
+    image: quay.io/minio/minio:latest
+    container_name: blog-minio
+    ports:
+      - "9000:9000"   # API port
+      - "9001:9001"   # Console port
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioAdmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-Minio@Secure123!}
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/ready"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    restart: unless-stopped
+    networks:
+      - blog-network
+
   # Blog Auth Service
   blog-auth:
     build:
       context: .
       dockerfile: blog-auth/Dockerfile
+      args:
+        - PROFILE=${SPRING_PROFILES_ACTIVE:-prod}
+        - PORT=${SERVER_PORT:-8081}
+        - DB_URL=jdbc:mysql://mysql-auth:3306/${MYSQL_DATABASE:-blog_auth_db}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+        - DB_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+        - DB_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-0}
+        - REDIS_HOST=${SPRING_REDIS_HOST:-redis}
+        - REDIS_PORT=${SPRING_REDIS_PORT:-6379}
+        - EUREKA_URL=http://blog-eureka-server:8761/eureka/
     container_name: blog-auth-service
     depends_on:
       mysql-auth:
@@ -97,22 +153,18 @@ services:
       blog-eureka:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
-      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST}
-      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - SERVER_PORT=${SERVER_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
-      - MAIL_HOST=${MAIL_HOST}
-      - MAIL_PORT=${MAIL_PORT}
-      - MAIL_USERNAME=${MAIL_USERNAME}
-      - MAIL_PASSWORD=${MAIL_PASSWORD}
-      - EUREKA_SERVER=${EUREKA_SERVER}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SERVER_PORT=${SERVER_PORT:-8081}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-auth:3306/${MYSQL_DATABASE:-blog_auth_db}?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD:-0}
+      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST:-redis}
+      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT:-6379}
+      - APP_AUTH_JWT_SECRET=${JWT_SECRET:-QURGREFERkFERkFCRERGQURGNTY3ODkwNDU2Nzg5MEFCQ0RFRg==}
+      - APP_CORS_ALLOWEDORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,*}
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://blog-eureka-server:8761/eureka/
     ports:
-      - "${SERVER_PORT}:${SERVER_PORT}"
+      - "${SERVER_PORT:-8081}:${SERVER_PORT:-8081}"
     restart: unless-stopped
     networks:
       - blog-network
@@ -122,6 +174,16 @@ services:
     build:
       context: .
       dockerfile: blog-post/Dockerfile
+      args:
+        - PROFILE=${SPRING_PROFILES_ACTIVE:-prod}
+        - PORT=${POST_SERVER_PORT:-8082}
+        - DB_URL=jdbc:mysql://mysql-post:3306/${MYSQL_POST_DATABASE:-blog_post_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+        - DB_USERNAME=${SPRING_POST_DATASOURCE_USERNAME:-root}
+        - DB_PASSWORD=${SPRING_POST_DATASOURCE_PASSWORD:-0}
+        - REDIS_HOST=${SPRING_REDIS_HOST:-redis}
+        - REDIS_PORT=${SPRING_REDIS_PORT:-6379}
+        - AUTH_SERVICE_URL=http://blog-auth-service:${SERVER_PORT:-8081}
+        - EUREKA_URL=http://blog-eureka-server:8761/eureka/
     container_name: blog-post-service
     depends_on:
       mysql-post:
@@ -133,21 +195,55 @@ services:
       blog-eureka:
         condition: service_healthy
     environment:
-      - SPRING_DATASOURCE_URL=${SPRING_POST_DATASOURCE_URL}
-      - SPRING_DATASOURCE_USERNAME=${SPRING_POST_DATASOURCE_USERNAME}
-      - SPRING_DATASOURCE_PASSWORD=${SPRING_POST_DATASOURCE_PASSWORD}
-      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST}
-      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT}
-      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE}
-      - SERVER_PORT=${POST_SERVER_PORT}
-      - JWT_SECRET=${JWT_SECRET}
-      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS}
-      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL}
-      - EUREKA_SERVER=${EUREKA_SERVER}
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SERVER_PORT=${POST_SERVER_PORT:-8082}
+      - SPRING_DATASOURCE_URL=jdbc:mysql://mysql-post:3306/${MYSQL_POST_DATABASE:-blog_post_db}?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      - SPRING_DATASOURCE_USERNAME=${SPRING_POST_DATASOURCE_USERNAME:-root}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_POST_DATASOURCE_PASSWORD:-0}
+      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST:-redis}
+      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT:-6379}
+      - APP_AUTH_JWT_SECRET=${JWT_SECRET:-QURGREFERkFERkFCRERGQURGNTY3ODkwNDU2Nzg5MEFCQ0RFRg==}
+      - APP_AUTH-SERVICE_URL=http://blog-auth-service:${SERVER_PORT:-8081}
+      - APP_CORS_ALLOWEDORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,*}
+      - EUREKA_CLIENT_SERVICE-URL_DEFAULTZONE=http://blog-eureka-server:8761/eureka/
     ports:
-      - "${POST_SERVER_PORT}:${POST_SERVER_PORT}"
+      - "${POST_SERVER_PORT:-8082}:${POST_SERVER_PORT:-8082}"
     volumes:
       - lucene-index-data:/app/data/index
+    restart: unless-stopped
+    networks:
+      - blog-network
+
+  # Blog Media Service
+  blog-media:
+    build:
+      context: .
+      dockerfile: blog-media/Dockerfile
+    container_name: blog-media-service
+    depends_on:
+      postgres-media:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    environment:
+      - SPRING_PROFILES_ACTIVE=${SPRING_PROFILES_ACTIVE:-prod}
+      - SERVER_PORT=${MEDIA_SERVER_PORT:-8083}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-media:5432/${POSTGRES_DB:-blog_media_db}
+      - SPRING_DATASOURCE_USERNAME=${POSTGRES_USER:-postgres}
+      - SPRING_DATASOURCE_PASSWORD=${POSTGRES_PASSWORD:-StrongPostgresPassword!}
+      - SPRING_REDIS_HOST=${SPRING_REDIS_HOST:-redis}
+      - SPRING_REDIS_PORT=${SPRING_REDIS_PORT:-6379}
+      - JWT_SECRET=${JWT_SECRET:-QURGREFERkFERkFCRERGQURGNTY3ODkwNDU2Nzg5MEFCQ0RFRg==}
+      - CORS_ALLOWED_ORIGINS=${CORS_ALLOWED_ORIGINS:-http://localhost:3000,http://localhost:8080,*}
+      - MINIO_URL=${MINIO_URL:-http://minio:9000}
+      - MINIO_ACCESS_KEY=${MINIO_ACCESS_KEY:-minioAdmin}
+      - MINIO_SECRET_KEY=${MINIO_SECRET_KEY:-Minio@Secure123!}
+      - MINIO_BUCKET_NAME=${MINIO_BUCKET_NAME:-blog-media}
+      - AUTH_SERVICE_URL=${AUTH_SERVICE_URL:-http://blog-auth-service:8081}
+      - EUREKA_SERVER=${EUREKA_SERVER:-http://blog-eureka-server:8761/eureka/}
+      - SPRING_FLYWAY_ENABLED=false
+    ports:
+      - "${MEDIA_SERVER_PORT:-8083}:${MEDIA_SERVER_PORT:-8083}"
     restart: unless-stopped
     networks:
       - blog-network
@@ -157,12 +253,18 @@ volumes:
     name: blog-auth-mysql-data
   mysql-post-data:
     name: blog-post-mysql-data
+  postgres-media-data:
+    name: blog-postgres-media-data
+    external: false
   redis-data:
     name: blog-redis-data
+  minio-data:
+    name: blog-minio-data
   lucene-index-data:
     name: blog-post-lucene-index-data
 
 networks:
   blog-network:
     name: blog-network
-    external: true 
+    driver: bridge
+    external: true
