@@ -1,79 +1,77 @@
 # Blog Application
 
-Blog Application là một hệ thống blog hiện đại được xây dựng trên kiến trúc microservices. Dự án này sử dụng Spring Boot, Spring Cloud, Docker và nhiều công nghệ khác để tạo nền tảng blog mạnh mẽ, dễ mở rộng và bảo mật.
+Blog Application is a modern blog system built on a microservices architecture. This project uses Spring Boot, Spring Cloud, Docker, and many other technologies to create a powerful, scalable, and secure blogging platform.
 
-## Tổng quan hệ thống
+## System Overview
 
-![Kiến trúc tổng quan](docs/images/diagrams/tongquat.png)
+![Overall Architecture](docs/images/diagrams/tongquat.png)
 
-## Kiến trúc cơ sở dữ liệu
+## Database Architecture
 
-![Kiến trúc cơ sở dữ liệu](docs/images/diagrams/database.png)
+![Database Architecture](docs/images/diagrams/database.png)
 
-## Sở đồ luồng làm việc
+## Workflow Diagrams
 
-![Luồng dữ liệu tạo bài viết](docs/images//diagrams/taobaiviet.png)
-![Luồng dữ liệu đọc bài viết](docs/images//diagrams/docbaiviet.png)
+![Post Creation Data Flow](docs/images//diagrams/taobaiviet.png)
+![Post Reading Data Flow](docs/images//diagrams/docbaiviet.png)
 
 ## Demo
 
-### Tương tác với API
+### API Interaction
 ![Swagger Demo](docs/images/demos/demoBlogApp.gif)
 
-## Cấu trúc dự án
+## Project Structure
 
-Dự án được chia thành các microservice riêng biệt:
+The project is divided into separate microservices:
 
-- **blog-eureka**: Service Discovery Server sử dụng Netflix Eureka
-- **blog-auth**: Dịch vụ xác thực và phân quyền người dùng
-- **blog-post**: Dịch vụ quản lý bài viết, danh mục, thẻ và bình luận
-- **blog-media**: Dịch vụ quản lý tệp media (hình ảnh, video, v.v.)
-- **blog-common**: Thư viện chung được sử dụng bởi tất cả các service
+- **blog-eureka**: Service Discovery Server using Netflix Eureka
+- **blog-auth**: Authentication and user authorization service
+- **blog-post**: Service for managing posts, categories, tags, and comments
+- **blog-media**: Service for managing media files (images, videos, etc.)
+- **blog-common**: Common library used by all services
 
-## Cách nhanh nhất để chạy ứng dụng
+## Quickest Way to Run the Application
 
-### Sử dụng script tự động
+### Using Automated Scripts
 
-Dự án cung cấp script để tự động hóa quá trình khởi động:
+The project provides scripts to automate the startup process:
 
-#### Cho Linux/macOS:
+#### For Linux/macOS:
 ```bash
-# Cấp quyền thực thi
+# Grant execute permission
 chmod +x start-docker.sh
 
-# Chạy script
+# Run the script
 ./start-docker.sh
 ```
 
-#### Cho Windows:
+#### For Windows:
 ```powershell
-# Chạy script PowerShell
+# Run the PowerShell script
 .\start-docker.ps1
 ```
 
-### Các tính năng của script
+### Script Features
 
-1. Khởi động tất cả dịch vụ theo thứ tự tối ưu
-2. Dừng hoặc khởi động lại dịch vụ
-3. Xem trạng thái và logs của từng dịch vụ
-4. Khởi động từng dịch vụ riêng lẻ
-5. Rebuild và khởi động lại toàn bộ hệ thống
+1. Start all services in the optimal order
+2. Stop or restart services
+3. View status and logs of each service
+4. Start individual services separately
+5. Rebuild and restart the entire system
 
-## Truy cập các dịch vụ
+## Accessing Services
 
 - Eureka Dashboard: http://localhost:8761
 - Auth Service API: http://localhost:8081/api/auth
 - Post Service API: http://localhost:8082/api
 - Media Service API: http://localhost:8083/api/media
-- MinIO Console: http://localhost:9001 (đăng nhập: minioAdmin/Minio@Secure123!)
+- MinIO Console: http://localhost:9001 (login: minioAdmin/Minio@Secure123!)
 
-Swagger UI có sẵn cho mỗi dịch vụ:
+Swagger UI is available for each service:
 - Auth Service: http://localhost:8081/api/auth/swagger-ui.html
 - Post Service: http://localhost:8082/api/swagger-ui.html
 - Media Service: http://localhost:8083/api/media/swagger-ui.html
 
-## Hướng dẫn chi tiết
+## Detailed Instructions
 
-Xem thêm hướng dẫn chi tiết về cài đặt Docker trong [DOCKER-README.md](DOCKER-README.md).
-
-
+See more detailed instructions about Docker installation in [DOCKER-README.md](DOCKER-README.md).
