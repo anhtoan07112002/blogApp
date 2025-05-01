@@ -12,7 +12,7 @@ import lombok.*;
 import java.io.Serializable;
 
 @Entity
-@Table(name = "users", uniqueConstraints = {
+@Table(name = "users_data", uniqueConstraints = {
         @UniqueConstraint(columnNames = "username"),
         @UniqueConstraint(columnNames = "email")
 })
